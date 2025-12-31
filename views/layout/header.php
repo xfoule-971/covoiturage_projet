@@ -1,35 +1,44 @@
-<?php
-use Core\Auth;
-?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Covoiturage Inter-sites</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Covoiturage - MVC PHP</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container">
         <a class="navbar-brand" href="/covoiturage-projet/public/">Covoiturage</a>
-        <div class="d-flex">
-            <?php if(Auth::check()): ?>
-                <?php if(Auth::isAdmin()): ?>
-                    <a href="/covoiturage-projet/public/admin" class="btn btn-light me-2">Dashboard Admin</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <?php if (\Core\Auth::check()): ?>
+                    <li class="nav-item">
+                        <span class="nav-link">Bonjour <?= htmlspecialchars($_SESSION['user']->firstname) ?></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/covoiturage-projet/public/trips">Créer un trajet</a>
+                    </li>
+                    <?php if (\Core\Auth::isAdmin()): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/covoiturage-projet/public/admin">Dashboard Admin</a>
+                        </li>
+                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/covoiturage-projet/public/logout">Déconnexion</a>
+                    </li>
                 <?php else: ?>
-                    <a href="/covoiturage-projet/public/trip/create" class="btn btn-light me-2">Créer un trajet</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/covoiturage-projet/public/login">Connexion</a>
+                    </li>
                 <?php endif; ?>
-                <span class="navbar-text text-light me-2">
-                    Bonjour <?= htmlspecialchars(Auth::user()->firstname) ?>
-                </span>
-                <a href="/covoiturage-projet/public/logout" class="btn btn-warning">Déconnexion</a>
-            <?php else: ?>
-                <a href="/covoiturage-projet/public/login" class="btn btn-light">Connexion</a>
-            <?php endif; ?>
+            </ul>
         </div>
     </div>
 </nav>
 <div class="container">
+
 
 
 

@@ -14,13 +14,19 @@ class Router {
         $this->routes['POST'][$path] = $callback;
     }
 
+    // Ajouter une route GET+POST
+    public function match($path, $callback, array $methods = ['GET', 'POST']) {
+        foreach ($methods as $method) {
+            $this->routes[$method][$path] = $callback;
+        }
+    }
+
     // Lancer le router
     public function run() {
         $method = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
         // === Adaptation pour sous-dossier ===
-        // Modifie ce chemin selon ton sous-dossier XAMPP
         $basePath = '/covoiturage-projet/public';
         if (strpos($uri, $basePath) === 0) {
             $uri = substr($uri, strlen($basePath));
@@ -39,6 +45,7 @@ class Router {
         }
     }
 }
+
 
 
 

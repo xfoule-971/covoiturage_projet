@@ -8,9 +8,9 @@ use Core\Auth;
  * Class AuthController
  *
  * Gestion de l'authentification :
- *  - connexion / déconnexion
- *  - contrôle CSRF
- *  - sécurisation session
+ *  - Connexion / Déconnexion
+ *  - Contrôle CSRF
+ *  - Sécurisation de session
  */
 class AuthController {
 
@@ -18,6 +18,10 @@ class AuthController {
 
     public function __construct() {
         $this->userModel = new UserModel();
+        // Démarre la session si non démarrée
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     /**
@@ -48,10 +52,10 @@ class AuthController {
             $user = $this->userModel->authenticate($email, $password);
 
             if ($user) {
-                // Connecte l'utilisateur en session
+                // Connecte l'utilisateur via la classe Auth
                 Auth::login($user);
 
-                // Régénération de l'ID de session (sécurité)
+                // Régénération de l'ID de session pour sécurité
                 session_regenerate_id(true);
 
                 // Redirection vers la page d'accueil
@@ -59,10 +63,11 @@ class AuthController {
                 exit;
             }
 
+            // Message d'erreur si échec
             $error = "Identifiants incorrects";
         }
 
-        // Chargement des vues
+        // Chargement des vues avec layout
         require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/auth/login.php';
         require __DIR__ . '/../Views/layout/footer.php';

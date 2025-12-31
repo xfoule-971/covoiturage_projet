@@ -1,90 +1,61 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Application Covoiturage</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        h2 { margin-top: 40px; }
-        a { text-decoration: none; color: blue; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-
-<h1>Application Covoiturage</h1>
-
-<?php if (isset($users) && count($users) > 0): ?>
-    <h2>Utilisateurs</h2>
-    <table>
+<h2>Trajets disponibles</h2>
+<table class="table table-striped">
+    <thead>
         <tr>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Rôle</th>
-        </tr>
-        <?php foreach($users as $user): ?>
-            <tr>
-                <td><?= $user->id ?></td>
-                <td><?= htmlspecialchars($user->lastname) ?></td>
-                <td><?= htmlspecialchars($user->firstname) ?></td>
-                <td><?= htmlspecialchars($user->email) ?></td>
-                <td><?= htmlspecialchars($user->phone) ?></td>
-                <td><?= $user->role ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
-<?php endif; ?>
-
-<?php if (isset($agencies) && count($agencies) > 0): ?>
-    <h2>Agences</h2>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Nom</th>
-        </tr>
-        <?php foreach($agencies as $agency): ?>
-            <tr>
-                <td><?= $agency->id ?></td>
-                <td><?= htmlspecialchars($agency->name) ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
-<?php endif; ?>
-
-<?php if (isset($trips) && count($trips) > 0): ?>
-    <h2>Trajets</h2>
-    <table>
-        <tr>
-            <th>ID</th>
             <th>Départ</th>
             <th>Arrivée</th>
-            <th>Date & Heure Départ</th>
-            <th>Date & Heure Arrivée</th>
-            <th>Places Totales</th>
-            <th>Places Disponibles</th>
-            <th>Conducteur</th>
+            <th>Date départ</th>
+            <th>Date arrivée</th>
+            <th>Places dispo</th>
+            <th>Auteur</th>
+            <th>Actions</th>
         </tr>
+    </thead>
+    <tbody>
         <?php foreach($trips as $trip): ?>
-            <tr>
-                <td><?= $trip->id ?></td>
-                <td><?= htmlspecialchars($trip->departure_agency) ?></td>
-                <td><?= htmlspecialchars($trip->arrival_agency) ?></td>
-                <td><?= $trip->departure_datetime ?></td>
-                <td><?= $trip->arrival_datetime ?></td>
-                <td><?= $trip->total_seats ?></td>
-                <td><?= $trip->available_seats ?></td>
-                <td><?= htmlspecialchars($trip->firstname . ' ' . $trip->lastname) ?></td>
-            </tr>
+        <?php if($trip->available_seats > 0 && strtotime($trip->departure_datetime) > time()): ?>
+        <tr>
+            <td><?= htmlspecialchars($trip->departure_agency) ?></td>
+            <td><?= htmlspecialchars($trip->arrival_agency) ?></td>
+            <td><?= $trip->departure_datetime ?></td>
+            <td><?= $trip->arrival_datetime ?></td>
+            <td><?= $trip->available_seats ?></td>
+            <td><?= htmlspecialchars($trip->firstname . ' ' . $trip->lastname) ?></td>
+            <td>
+                <?php if(\Core\Auth::check()): ?>
+                    <a href="#" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#tripModal<?= $trip->id ?>">Détails</a>
+                    <?php if($_SESSION['user']->id == $trip->user_id || \Core\Auth::isAdmin()): ?>
+                        <a href="#" class="btn btn-sm btn-warning">Modifier</a>
+                        <a href="#" class="btn btn-sm btn-danger">Supprimer</a>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <!-- Modal détail trajet -->
+        <div class="modal fade" id="tripModal<?= $trip->id ?>" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Détails du trajet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>Contact :</strong> <?= htmlspecialchars($trip->firstname . ' ' . $trip->lastname) ?></p>
+                <p><strong>Téléphone :</strong> <?= htmlspecialchars($trip->phone) ?></p>
+                <p><strong>Email :</strong> <?= htmlspecialchars($trip->email) ?></p>
+                <p><strong>Places totales :</strong> <?= $trip->total_seats ?></p>
+                <p><strong>Places disponibles :</strong> <?= $trip->available_seats ?></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <?php endif; ?>
         <?php endforeach; ?>
-    </table>
-<?php endif; ?>
+    </tbody>
+</table>
 
-</body>
-</html>
+
+
+
+
 

@@ -26,15 +26,15 @@ if (!class_exists(\Router\Router::class)) {
 // Instanciation du router
 $router = new Router();
 
-// ===== ROUTES =====
+// ===== ROUTES PUBLIQUES =====
 
 // Page d'accueil publique (trajets disponibles)
 $router->get('/', function() {
     $controller = new TripController();
-    $controller->index(); // affichage de Home.php avec trajets
+    $controller->index();
 });
 
-// Users (admin uniquement)
+// Users (liste admin)
 $router->get('/users', function() {
     $controller = new UserController();
     $controller->index();
@@ -52,37 +52,48 @@ $router->get('/trips', function() {
     $controller->index();
 });
 
-// Générer 100 trajets aléatoires (test / admin)
+// Générer 100 trajets aléatoires (admin / test)
 $router->get('/generate-trips', function() {
     $controller = new TripController();
     $controller->generateRandomTrips(100, 20);
     echo "<p><a href='/covoiturage-projet/public/trips'>Voir les trajets générés</a></p>";
 });
 
-// Authentification
-$router->get('/login', function() {
+// ===== ROUTES AUTH =====
+$router->match('/login', function() {
     $controller = new AuthController();
     $controller->login();
-});
-
-$router->post('/login', function() {
-    $controller = new AuthController();
-    $controller->login();
-});
+}, ['GET', 'POST']);
 
 $router->get('/logout', function() {
     $controller = new AuthController();
     $controller->logout();
 });
 
-// Admin dashboard
+// ===== ROUTES ADMIN =====
 $router->get('/admin', function() {
     $controller = new AdminController();
     $controller->dashboard();
 });
 
+$router->get('/admin/users', function() {
+    $controller = new AdminController();
+    $controller->users();
+});
+
+$router->get('/admin/agencies', function() {
+    $controller = new AdminController();
+    $controller->agencies();
+});
+
+$router->get('/admin/trips', function() {
+    $controller = new AdminController();
+    $controller->trips();
+});
+
 // Lancer le router
 $router->run();
+
 
 
 

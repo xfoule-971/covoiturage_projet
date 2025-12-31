@@ -9,8 +9,9 @@ use Core\Auth;
 /**
  * Class AdminController
  *
- * Tableau de bord administrateur
- * Accès réservé uniquement aux utilisateurs ADMIN
+ * Gestion de l'administration :
+ * - Accès réservé aux utilisateurs ADMIN
+ * - Dashboard et pages spécifiques
  */
 class AdminController {
 
@@ -19,6 +20,8 @@ class AdminController {
     private TripModel $tripModel;
 
     public function __construct() {
+        Auth::requireAdmin(); // Bloque l'accès aux non-admins
+
         $this->userModel = new UserModel();
         $this->agencyModel = new AgencyModel();
         $this->tripModel = new TripModel();
@@ -26,25 +29,41 @@ class AdminController {
 
     /**
      * Tableau de bord administrateur
-     * 
-     * Affiche :
-     *  - liste des utilisateurs
-     *  - liste des agences
-     *  - liste des trajets
      */
     public function dashboard(): void {
-
-        // Bloque l'accès aux non-admins
-        Auth::requireAdmin();
-
-        // Récupération des données
-        $users = $this->userModel->findAll();
-        $agencies = $this->agencyModel->findAll();
-        $trips = $this->tripModel->findAll();
-
-        // Chargement des vues
         require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/admin/dashboard.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
+
+    /**
+     * Liste des utilisateurs
+     */
+    public function users(): void {
+        $users = $this->userModel->findAll();
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/users.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Liste et gestion des agences
+     */
+    public function agencies(): void {
+        $agencies = $this->agencyModel->findAll();
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/agencies.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Liste des trajets
+     */
+    public function trips(): void {
+        $trips = $this->tripModel->findAll();
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/trips.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
 }
+

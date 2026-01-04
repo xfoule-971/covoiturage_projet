@@ -8,70 +8,80 @@ use Core\Auth;
 /**
  * Class TripController
  *
- * Contrôleur des trajets.
- * Gestion :
- *  - affichage des trajets publics et utilisateurs
- *  - création aléatoire pour tests
- *  - futur ajout création / modification / suppression
+ * Gère les trajets :
+ * - affichage public (home)
+ * - affichage détail
+ * - génération aléatoire (admin)
  */
 class TripController {
 
     private TripModel $tripModel;
     private AgencyModel $agencyModel;
 
+    /**
+     * Constructeur
+     */
     public function __construct() {
-        $this->tripModel = new TripModel();
+        $this->tripModel   = new TripModel();
         $this->agencyModel = new AgencyModel();
     }
 
     /**
-     * Affiche tous les trajets
-     * 
-     * Pour la page d'accueil :
-     *  - uniquement trajets avec places disponibles
-     *  - uniquement trajets futurs
-     *  - tri par date de départ croissante
+     * Page d'accueil
+     * - trajets futurs
+     * - places disponibles
      */
     public function index(): void {
         $trips = $this->tripModel->findAllAvailableFuture();
-        require __DIR__ . '/../Views/Home.php';
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/home.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Génère des trajets aléatoires (outil admin / dev)
-     *
-     * @param int $numTrips Nombre de trajets à générer
-     * @param int $numUsers Nombre d'utilisateurs possibles
+     * Détail d'un trajet
+     */
+    public function show(int $id): void {
+        $trip = $this->tripModel->findById($id);
+
+        if (!$trip) {
+            http_response_code(404);
+            die('Trajet non trouvé');
+        }
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/trips/show.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Génération de trajets aléatoires (ADMIN)
      */
     public function generateRandomTrips(int $numTrips = 100, int $numUsers = 20): void {
 
-        // Récupère toutes les agences
-        $agencies = $this->agencyModel->findAll();
+        Auth::requireAdmin();
+
+        $agencies   = $this->agencyModel->findAll();
         $agencyIds = array_map(fn($a) => $a->id, $agencies);
 
         for ($i = 0; $i < $numTrips; $i++) {
 
-            // Choix aléatoire agences départ/arrivée (différentes)
             $departure = $agencyIds[array_rand($agencyIds)];
             do {
                 $arrival = $agencyIds[array_rand($agencyIds)];
             } while ($arrival === $departure);
 
-            // Génération aléatoire date/heure
             $departureTime = new \DateTime(
-                '+' . rand(0,30) . ' days +' . rand(0,23) . ' hours +' . rand(0,59) . ' minutes'
+                '+' . rand(0,30) . ' days +' . rand(0,23) . ' hours'
             );
+
             $arrivalTime = clone $departureTime;
             $arrivalTime->modify('+' . rand(1,6) . ' hours');
 
-            // Si totalSeats = 3..6, availableSeats peut être 0..totalSeats
-            $totalSeats = rand(3,6);
+            $totalSeats     = rand(3,6);
             $availableSeats = rand(0,$totalSeats);
 
-            // Choix utilisateur aléatoire
-            $userId = rand(1,$numUsers);
-
-            // Création du trajet dans la base
             $this->tripModel->create([
                 'departure_agency_id' => $departure,
                 'arrival_agency_id'   => $arrival,
@@ -79,41 +89,14 @@ class TripController {
                 'arrival_datetime'    => $arrivalTime->format('Y-m-d H:i:s'),
                 'total_seats'         => $totalSeats,
                 'available_seats'     => $availableSeats,
-                'user_id'             => $userId
+                'user_id'             => rand(1,$numUsers)
             ]);
         }
 
-        echo "✅ $numTrips trajets générés !";
-    }
-
-    /**
-     * Affiche les détails d'un trajet
-     * Accessible à tous mais modal complet pour les utilisateurs connectés
-     *
-     * @param int $id
-     */
-    public function show(int $id): void {
-        $trip = $this->tripModel->findById($id);
-        if (!$trip) {
-            http_response_code(404);
-            die("Trajet non trouvé !");
-        }
-
-        require __DIR__ . '/../Views/trips/show.php';
-    }
-
-    /**
-     * Vérifie que l'utilisateur peut modifier ou supprimer un trajet
-     *
-     * @param object $trip
-     */
-    private function authorizeUser(object $trip): void {
-        if (!Auth::check() || ($trip->user_id !== Auth::user()->id && !Auth::isAdmin())) {
-            http_response_code(403);
-            die('⛔ Action non autorisée');
-        }
+        echo "✅ $numTrips trajets générés";
     }
 }
+
 
 
 

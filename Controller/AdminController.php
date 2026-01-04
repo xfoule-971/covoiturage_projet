@@ -2,68 +2,64 @@
 namespace Controller;
 
 use Models\UserModel;
-use Models\AgencyModel;
-use Models\TripModel;
 use Core\Auth;
 
-/**
- * Class AdminController
- *
- * Gestion de l'administration :
- * - Accès réservé aux utilisateurs ADMIN
- * - Dashboard et pages spécifiques
- */
-class AdminController {
+class AuthController {
 
     private UserModel $userModel;
-    private AgencyModel $agencyModel;
-    private TripModel $tripModel;
 
     public function __construct() {
-        Auth::requireAdmin(); // Bloque l'accès aux non-admins
-
         $this->userModel = new UserModel();
-        $this->agencyModel = new AgencyModel();
-        $this->tripModel = new TripModel();
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
-    /**
-     * Tableau de bord administrateur
-     */
-    public function dashboard(): void {
+    public function login(): void {
+
+        if (!isset($_SESSION['csrf'])) {
+            $_SESSION['csrf'] = bin2hex(random_bytes(32));
+        }
+
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            if (
+                !isset($_POST['csrf']) ||
+                $_POST['csrf'] !== $_SESSION['csrf']
+            ) {
+                die('⛔ Tentative CSRF détectée');
+            }
+
+            $email    = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            $password = $_POST['password'] ?? '';
+
+            $user = $this->userModel->authenticate($email, $password);
+
+            if ($user) {
+                Auth::login($user);
+                session_regenerate_id(true);
+
+                header('Location: /covoiturage-projet/public/');
+                exit;
+            }
+
+            $error = 'Identifiants incorrects';
+        }
+
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/admin/dashboard.php';
+        require __DIR__ . '/../Views/auth/login.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
-    /**
-     * Liste des utilisateurs
-     */
-    public function users(): void {
-        $users = $this->userModel->findAll();
-        require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/admin/users.php';
-        require __DIR__ . '/../Views/layout/footer.php';
-    }
+    public function logout(): void {
+        Auth::logout();
 
-    /**
-     * Liste et gestion des agences
-     */
-    public function agencies(): void {
-        $agencies = $this->agencyModel->findAll();
-        require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/admin/agencies.php';
-        require __DIR__ . '/../Views/layout/footer.php';
-    }
-
-    /**
-     * Liste des trajets
-     */
-    public function trips(): void {
-        $trips = $this->tripModel->findAll();
-        require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/admin/trips.php';
-        require __DIR__ . '/../Views/layout/footer.php';
+        header('Location: /covoiturage-projet/public/');
+        exit;
     }
 }
+
 

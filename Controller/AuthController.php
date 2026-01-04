@@ -7,18 +7,24 @@ use Core\Auth;
 /**
  * Class AuthController
  *
- * Gestion de l'authentification :
- *  - Connexion / Déconnexion
- *  - Contrôle CSRF
- *  - Sécurisation de session
+ * Gère l'authentification :
+ * - connexion
+ * - déconnexion
+ * - protection CSRF
+ * - sécurisation de la session
  */
 class AuthController {
 
     private UserModel $userModel;
 
+    /**
+     * Constructeur
+     * - Initialise le modèle utilisateur
+     * - Démarre la session si nécessaire
+     */
     public function __construct() {
         $this->userModel = new UserModel();
-        // Démarre la session si non démarrée
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -29,59 +35,62 @@ class AuthController {
      */
     public function login(): void {
 
-        // Génération du token CSRF si inexistant
+        // Création du token CSRF si absent
         if (!isset($_SESSION['csrf'])) {
             $_SESSION['csrf'] = bin2hex(random_bytes(32));
         }
 
         $error = null;
 
-        // Traitement du formulaire POST
+        // Si formulaire soumis
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            // Vérification du token CSRF
-            if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf']) {
+            // Vérification CSRF
+            if (
+                !isset($_POST['csrf']) ||
+                $_POST['csrf'] !== $_SESSION['csrf']
+            ) {
                 die('⛔ Tentative CSRF détectée');
             }
 
-            // Nettoyage des données
-            $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            // Nettoyage des entrées
+            $email    = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
             $password = $_POST['password'] ?? '';
 
-            // Tentative d’authentification via UserModel
+            // Tentative d'authentification
             $user = $this->userModel->authenticate($email, $password);
 
             if ($user) {
-                // Connecte l'utilisateur via la classe Auth
+                // Connexion utilisateur
                 Auth::login($user);
 
-                // Régénération de l'ID de session pour sécurité
+                // Protection contre le session fixation
                 session_regenerate_id(true);
 
-                // Redirection vers la page d'accueil
+                // Redirection accueil
                 header('Location: /covoiturage-projet/public/');
                 exit;
             }
 
-            // Message d'erreur si échec
-            $error = "Identifiants incorrects";
+            // Erreur si échec
+            $error = 'Identifiants incorrects';
         }
 
-        // Chargement des vues avec layout
+        // Affichage vue avec layout
         require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/auth/login.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Déconnecte l'utilisateur
+     * Déconnexion utilisateur
      */
     public function logout(): void {
         Auth::logout();
 
-        // Redirection vers l'accueil
         header('Location: /covoiturage-projet/public/');
         exit;
     }
 }
+
 

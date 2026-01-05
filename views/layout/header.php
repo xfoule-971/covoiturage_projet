@@ -15,7 +15,7 @@
 <body>
 
 <!-- Barre de navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-5 fixed-top">
     <div class="container">
 
         <!-- ===================== -->
@@ -42,7 +42,7 @@
 
             <?php if (\Core\Auth::check()): ?>
 
-                <!-- 1️⃣ Créer un trajet -->
+                <!-- Créer un trajet -->
                 <li class="nav-item me-2">
                     <a href="/covoiturage-projet/public/trips/create"
                        class="btn btn-success">
@@ -50,7 +50,7 @@
                     </a>
                 </li>
 
-                <!-- 2️⃣ Bonjour prénom nom -->
+                <!-- Bonjour prénom nom -->
                 <li class="nav-item me-3">
                     <span class="navbar-text text-white">
                         Bonjour
@@ -59,7 +59,7 @@
                     </span>
                 </li>
 
-                <!-- 3️⃣ Déconnexion -->
+                <!-- Déconnexion -->
                 <li class="nav-item">
                     <a href="/covoiturage-projet/public/logout"
                        class="btn btn-danger">

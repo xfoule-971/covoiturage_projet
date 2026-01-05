@@ -7,76 +7,83 @@ use PDO;
 /**
  * Class TripModel
  *
- * Modèle des trajets
- * Fournit toutes les opérations CRUD et requêtes spécifiques
+ * Gère l'accès aux données des trajets :
+ * - affichage public (page d'accueil)
+ * - affichage utilisateur connecté
+ * - création, modification, suppression
  */
-class TripModel {
-
+class TripModel
+{
     private PDO $db;
 
-    public function __construct() {
+    /**
+     * Constructeur
+     */
+    public function __construct()
+    {
         $this->db = Db::getInstance();
     }
 
     /**
-     * Retourne tous les trajets
-     * Triés par date de départ croissante
+     * Récupère les prochains trajets
+     * - uniquement futurs
+     * - avec des places disponibles
+     * - triés par date de départ croissante
+     *
+     * Utilisé sur :
+     * - home.php (visiteur)
+     * - home_user.php (utilisateur connecté)
      */
-    public function findAll(): array {
-        $stmt = $this->db->query("
-            SELECT t.*, 
-                   u.firstname, u.lastname, u.phone, u.email,
-                   da.name as departure_agency, 
-                   aa.name as arrival_agency
+    public function findAllAvailableFuture(): array
+    {
+        $sql = "
+            SELECT 
+                t.*,
+                u.firstname,
+                u.lastname,
+                u.phone,
+                u.email,
+                a1.name AS departure_agency,
+                a2.name AS arrival_agency
             FROM trips t
-            JOIN users u ON t.user_id = u.id
-            JOIN agencies da ON t.departure_agency_id = da.id
-            JOIN agencies aa ON t.arrival_agency_id = aa.id
+            JOIN users u ON u.id = t.user_id
+            JOIN agencies a1 ON a1.id = t.departure_agency_id
+            JOIN agencies a2 ON a2.id = t.arrival_agency_id
+            WHERE t.departure_datetime > NOW()
+              AND t.available_seats > 0
             ORDER BY t.departure_datetime ASC
-        ");
-        return $stmt->fetchAll();
+        ";
+
+        return $this->db->query($sql)->fetchAll();
     }
 
     /**
-     * Retourne uniquement les trajets disponibles et futurs
-     */
-    public function findAllAvailableFuture(): array {
-        $stmt = $this->db->prepare("
-            SELECT t.*, 
-                   u.firstname, u.lastname, u.phone, u.email,
-                   da.name as departure_agency, 
-                   aa.name as arrival_agency
-            FROM trips t
-            JOIN users u ON t.user_id = u.id
-            JOIN agencies da ON t.departure_agency_id = da.id
-            JOIN agencies aa ON t.arrival_agency_id = aa.id
-            WHERE t.available_seats > 0
-              AND t.departure_datetime >= NOW()
-            ORDER BY t.departure_datetime ASC
-        ");
-        $stmt->execute();
-        return $stmt->fetchAll();
-    }
-
-    /**
-     * Retourne un trajet par son ID
+     * Récupère un trajet par son ID
      *
      * @param int $id
+     * @return object|null
      */
-    public function findById(int $id): ?object {
+    public function findById(int $id): ?object
+    {
         $stmt = $this->db->prepare("
-            SELECT t.*, 
-                   u.firstname, u.lastname, u.phone, u.email,
-                   da.name as departure_agency, 
-                   aa.name as arrival_agency
+            SELECT 
+                t.*,
+                u.firstname,
+                u.lastname,
+                u.phone,
+                u.email,
+                a1.name AS departure_agency,
+                a2.name AS arrival_agency
             FROM trips t
-            JOIN users u ON t.user_id = u.id
-            JOIN agencies da ON t.departure_agency_id = da.id
-            JOIN agencies aa ON t.arrival_agency_id = aa.id
+            JOIN users u ON u.id = t.user_id
+            JOIN agencies a1 ON a1.id = t.departure_agency_id
+            JOIN agencies a2 ON a2.id = t.arrival_agency_id
             WHERE t.id = ?
         ");
+
         $stmt->execute([$id]);
         $trip = $stmt->fetch();
+
         return $trip ?: null;
     }
 
@@ -85,12 +92,20 @@ class TripModel {
      *
      * @param array $data
      */
-    public function create(array $data): void {
+    public function create(array $data): void
+    {
         $stmt = $this->db->prepare("
-            INSERT INTO trips 
-            (departure_agency_id, arrival_agency_id, departure_datetime, arrival_datetime, total_seats, available_seats, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO trips (
+                departure_agency_id,
+                arrival_agency_id,
+                departure_datetime,
+                arrival_datetime,
+                total_seats,
+                available_seats,
+                user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
+
         $stmt->execute([
             $data['departure_agency_id'],
             $data['arrival_agency_id'],
@@ -103,22 +118,24 @@ class TripModel {
     }
 
     /**
-     * Met à jour un trajet existant
+     * Met à jour un trajet
      *
-     * @param int $id
+     * @param int   $id
      * @param array $data
      */
-    public function update(int $id, array $data): void {
+    public function update(int $id, array $data): void
+    {
         $stmt = $this->db->prepare("
             UPDATE trips SET
                 departure_agency_id = ?,
-                arrival_agency_id = ?,
-                departure_datetime = ?,
-                arrival_datetime = ?,
-                total_seats = ?,
-                available_seats = ?
+                arrival_agency_id   = ?,
+                departure_datetime  = ?,
+                arrival_datetime    = ?,
+                total_seats         = ?,
+                available_seats     = ?
             WHERE id = ?
         ");
+
         $stmt->execute([
             $data['departure_agency_id'],
             $data['arrival_agency_id'],
@@ -135,9 +152,11 @@ class TripModel {
      *
      * @param int $id
      */
-    public function delete(int $id): void {
+    public function delete(int $id): void
+    {
         $stmt = $this->db->prepare("DELETE FROM trips WHERE id = ?");
         $stmt->execute([$id]);
     }
 }
+
 

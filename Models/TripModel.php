@@ -25,14 +25,15 @@ class TripModel
     }
 
     /**
-     * Récupère les prochains trajets
-     * - uniquement futurs
-     * - avec des places disponibles
-     * - triés par date de départ croissante
+     * Récupère les prochains trajets disponibles (MAX 10)
+     *
+     * - trajets futurs
+     * - places disponibles > 0
+     * - tri par date croissante
      *
      * Utilisé sur :
-     * - home.php (visiteur)
-     * - home_user.php (utilisateur connecté)
+     * - home.php
+     * - home_user.php
      */
     public function findAllAvailableFuture(): array
     {
@@ -52,6 +53,7 @@ class TripModel
             WHERE t.departure_datetime > NOW()
               AND t.available_seats > 0
             ORDER BY t.departure_datetime ASC
+            LIMIT 10
         ";
 
         return $this->db->query($sql)->fetchAll();
@@ -59,9 +61,6 @@ class TripModel
 
     /**
      * Récupère un trajet par son ID
-     *
-     * @param int $id
-     * @return object|null
      */
     public function findById(int $id): ?object
     {
@@ -91,8 +90,9 @@ class TripModel
      * Crée un nouveau trajet
      *
      * @param array $data
+     * @return int ID du trajet créé
      */
-    public function create(array $data): void
+    public function create(array $data): int
     {
         $stmt = $this->db->prepare("
             INSERT INTO trips (
@@ -115,13 +115,12 @@ class TripModel
             $data['available_seats'],
             $data['user_id']
         ]);
+
+        return (int) $this->db->lastInsertId();
     }
 
     /**
-     * Met à jour un trajet
-     *
-     * @param int   $id
-     * @param array $data
+     * Met à jour un trajet existant
      */
     public function update(int $id, array $data): void
     {
@@ -149,8 +148,6 @@ class TripModel
 
     /**
      * Supprime un trajet
-     *
-     * @param int $id
      */
     public function delete(int $id): void
     {
@@ -158,5 +155,6 @@ class TripModel
         $stmt->execute([$id]);
     }
 }
+
 
 

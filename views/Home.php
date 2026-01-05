@@ -19,7 +19,7 @@
     <?php if (!\Core\Auth::check()): ?>
         Pour obtenir plus d'informations sur un trajet, veuillez vous connecter
     <?php else: ?>
-        Liste des trajets disponibles
+        Trajets proposés
     <?php endif; ?>
 </h2>
 

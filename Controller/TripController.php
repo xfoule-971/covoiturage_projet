@@ -9,29 +9,29 @@ use Core\Auth;
  * Class TripController
  *
  * Gère les trajets :
- * - affichage public (home)
- * - affichage détail
- * - génération aléatoire (admin)
+ * - accueil public
+ * - accueil utilisateur connecté
+ * - création d'un trajet
  */
-class TripController {
-
+class TripController
+{
     private TripModel $tripModel;
     private AgencyModel $agencyModel;
 
     /**
      * Constructeur
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->tripModel   = new TripModel();
         $this->agencyModel = new AgencyModel();
     }
 
     /**
-     * Page d'accueil
-     * - trajets futurs
-     * - places disponibles
+     * Accueil VISITEUR
      */
-    public function index(): void {
+    public function index(): void
+    {
         $trips = $this->tripModel->findAllAvailableFuture();
 
         require __DIR__ . '/../Views/layout/header.php';
@@ -40,62 +40,119 @@ class TripController {
     }
 
     /**
-     * Détail d'un trajet
+     * Accueil UTILISATEUR CONNECTÉ
      */
-    public function show(int $id): void {
-        $trip = $this->tripModel->findById($id);
+    public function homeUser(): void
+    {
+        Auth::requireLogin();
 
-        if (!$trip) {
-            http_response_code(404);
-            die('Trajet non trouvé');
-        }
+        $trips = $this->tripModel->findAllAvailableFuture();
 
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/trips/show.php';
+        require __DIR__ . '/../Views/HomeUser.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Génération de trajets aléatoires (ADMIN)
+     * Création d'un trajet
+     *
+     * Règles métier :
+     * - utilisateur connecté
+     * - agences différentes
+     * - date future
+     * - arrivée après départ
+     * - places entre 1 et 10
      */
-    public function generateRandomTrips(int $numTrips = 100, int $numUsers = 20): void {
+    public function create(): void
+    {
+        Auth::requireLogin();
 
-        Auth::requireAdmin();
-
-        $agencies   = $this->agencyModel->findAll();
-        $agencyIds = array_map(fn($a) => $a->id, $agencies);
-
-        for ($i = 0; $i < $numTrips; $i++) {
-
-            $departure = $agencyIds[array_rand($agencyIds)];
-            do {
-                $arrival = $agencyIds[array_rand($agencyIds)];
-            } while ($arrival === $departure);
-
-            $departureTime = new \DateTime(
-                '+' . rand(0,30) . ' days +' . rand(0,23) . ' hours'
-            );
-
-            $arrivalTime = clone $departureTime;
-            $arrivalTime->modify('+' . rand(1,6) . ' hours');
-
-            $totalSeats     = rand(3,6);
-            $availableSeats = rand(0,$totalSeats);
-
-            $this->tripModel->create([
-                'departure_agency_id' => $departure,
-                'arrival_agency_id'   => $arrival,
-                'departure_datetime'  => $departureTime->format('Y-m-d H:i:s'),
-                'arrival_datetime'    => $arrivalTime->format('Y-m-d H:i:s'),
-                'total_seats'         => $totalSeats,
-                'available_seats'     => $availableSeats,
-                'user_id'             => rand(1,$numUsers)
-            ]);
+        /* =========================
+         * CSRF
+         * ========================= */
+        if (empty($_SESSION['csrf'])) {
+            $_SESSION['csrf'] = bin2hex(random_bytes(32));
         }
 
-        echo "✅ $numTrips trajets générés";
+        $agencies = $this->agencyModel->findAll();
+        $error = null;
+
+        /* =========================
+         * TRAITEMENT FORMULAIRE
+         * ========================= */
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            // ---- Vérification CSRF ----
+            if (
+                empty($_POST['csrf']) ||
+                !hash_equals($_SESSION['csrf'], $_POST['csrf'])
+            ) {
+                http_response_code(403);
+                die('Requête CSRF invalide');
+            }
+
+            // ---- Récupération sécurisée ----
+            $departureAgency = filter_input(INPUT_POST, 'departure_agency_id', FILTER_VALIDATE_INT);
+            $arrivalAgency   = filter_input(INPUT_POST, 'arrival_agency_id', FILTER_VALIDATE_INT);
+            $departureDate   = $_POST['departure_datetime'] ?? null;
+            $arrivalDate     = $_POST['arrival_datetime'] ?? null;
+            $totalSeats      = filter_input(INPUT_POST, 'total_seats', FILTER_VALIDATE_INT);
+
+            /* =========================
+             * CONTRÔLES MÉTIER
+             * ========================= */
+
+            if (!$departureAgency || !$arrivalAgency || !$departureDate || !$arrivalDate || !$totalSeats) {
+                $error = "Tous les champs sont obligatoires.";
+            }
+
+            elseif ($departureAgency === $arrivalAgency) {
+                $error = "L'agence de départ et d'arrivée doivent être différentes.";
+            }
+
+            elseif (strtotime($departureDate) <= time()) {
+                $error = "La date de départ doit être dans le futur.";
+            }
+
+            elseif (strtotime($arrivalDate) <= strtotime($departureDate)) {
+                $error = "La date d'arrivée doit être postérieure à la date de départ.";
+            }
+
+            elseif ($totalSeats < 1 || $totalSeats > 10) {
+                $error = "Le nombre de places doit être compris entre 1 et 10.";
+            }
+
+            /* =========================
+             * CRÉATION TRAJET
+             * ========================= */
+            if (!$error) {
+
+                $this->tripModel->create([
+                    'departure_agency_id' => $departureAgency,
+                    'arrival_agency_id'   => $arrivalAgency,
+                    'departure_datetime'  => $departureDate,
+                    'arrival_datetime'    => $arrivalDate,
+                    'total_seats'         => $totalSeats,
+                    'available_seats'     => $totalSeats,
+                    'user_id'             => $_SESSION['user']->id
+                ]);
+
+                header('Location: /covoiturage-projet/public/home-user');
+                exit;
+            }
+        }
+
+        /* =========================
+         * AFFICHAGE FORMULAIRE
+         * ========================= */
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/trip/create.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 }
+
+
+
 
 
 

@@ -6,38 +6,70 @@
  * - délègue au routeur
  */
 
+declare(strict_types=1);
+
+// =====================
+// SESSION
+// =====================
 session_start();
 
+// =====================
+// AUTOLOADER
+// =====================
 require_once __DIR__ . '/../Core/Autoloader.php';
 \Core\Autoloader::register();
 
-// ROUTEUR SIMPLE (exemple)
-$uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+// =====================
+// ROUTER
+// =====================
+use Router\Router;
+use Controller\TripController;
+use Controller\AuthController;
 
-switch ($uri) {
+// Instanciation du routeur
+$router = new Router();
 
-    case '':
-    case 'covoiturage-projet/public':
-        (new Controller\TripController())->index();
-        break;
+/* =========================
+ * ROUTES PUBLIQUES
+ * ========================= */
 
-    case 'covoiturage-projet/public/login':
-        (new Controller\AuthController())->login();
-        break;
+// Page d'accueil (visiteur)
+$router->get('/', function () {
+    (new TripController())->index();
+});
 
-    case 'covoiturage-projet/public/logout':
-        (new Controller\AuthController())->logout();
-        break;
+// Connexion
+$router->match('/login', function () {
+    (new AuthController())->login();
+});
 
-    case 'covoiturage-projet/public/home-user':
-        \Core\Auth::requireLogin();
-        (new Controller\TripController())->homeUser();
-        break;
+// Déconnexion
+$router->get('/logout', function () {
+    (new AuthController())->logout();
+});
 
-    default:
-        http_response_code(404);
-        echo 'Page introuvable';
-}
+/* =========================
+ * UTILISATEUR CONNECTÉ
+ * ========================= */
+
+// Accueil utilisateur
+$router->get('/home-user', function () {
+    \Core\Auth::requireLogin();
+    (new TripController())->homeUser();
+});
+
+// Création d'un trajet
+$router->match('/trips/create', function () {
+    \Core\Auth::requireLogin();
+    (new TripController())->create();
+});
+
+/* =========================
+ * LANCEMENT DU ROUTER
+ * ========================= */
+
+$router->run();
+
 
 
 

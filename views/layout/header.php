@@ -43,7 +43,7 @@
             <?php if (\Core\Auth::check()): ?>
 
                 <!-- Créer un trajet -->
-                <li class="nav-item me-2">
+                <li class="nav-item mx-3">
                     <a href="/covoiturage-projet/public/trips/create"
                        class="btn btn-success">
                         Créer un trajet
@@ -51,7 +51,7 @@
                 </li>
 
                 <!-- Bonjour prénom nom -->
-                <li class="nav-item me-3">
+                <li class="nav-item mx-3">
                     <span class="navbar-text text-white">
                         Bonjour
                         <?= htmlspecialchars($_SESSION['user']->firstname) ?>
@@ -60,7 +60,7 @@
                 </li>
 
                 <!-- Déconnexion -->
-                <li class="nav-item">
+                <li class="nav-item mx-3">
                     <a href="/covoiturage-projet/public/logout"
                        class="btn btn-danger">
                         Déconnexion

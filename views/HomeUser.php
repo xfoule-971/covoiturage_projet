@@ -2,7 +2,7 @@
 use Core\Auth;
 ?>
 
-<h2 class="mb-4">Trajets proposés</h2>
+<h2 class="mb-5 mt-5 pt-5">Trajets proposés</h2>
 
 <table class="table table-striped align-middle">
     <thead class="table-dark">
@@ -49,7 +49,7 @@ use Core\Auth;
 
                         <!-- Modifier -->
                         <button
-                            class="btn btn-sm btn-outline-warning"
+                            class="btn btn-sm btn-outline-warning mx-3"
                             data-bs-toggle="modal"
                             data-bs-target="#tripModalEdit<?= $trip->id ?>"
                             title="Modifier"

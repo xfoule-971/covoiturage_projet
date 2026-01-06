@@ -1,7 +1,7 @@
 <?php
 use Core\Auth;
 ?>
-<div class="container mt-4">
+<div class="container mt-4 pt-5">
     <h2>Créer un nouveau trajet</h2>
 
     <?php if (isset($error)): ?>

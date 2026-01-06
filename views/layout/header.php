@@ -11,9 +11,6 @@
         rel="stylesheet"
     >
 
-    <!-- CSS application -->
-    <link rel="stylesheet" href="/covoiturage-projet/public/assets/style.css">
-
 </head>
 
 <body>
@@ -21,7 +18,7 @@
 <!-- ========================= -->
 <!-- BARRE DE NAVIGATION -->
 <!-- ========================= -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-5 navigation">
+<nav class="navbar navbar-expand-lg bg-primary navbar-dark mb-5 fixed-top">
     <div class="container">
 
         <!-- ===================== -->
@@ -48,21 +45,21 @@
             <ul class="navbar-nav mx-auto">
 
                 <li class="nav-item mx-2">
-                    <a class="btn btn-light btn-sm"
+                    <a class="btn btn-success btn-sm"
                        href="/covoiturage-projet/public/admin/users">
                         Utilisateurs
                     </a>
                 </li>
 
                 <li class="nav-item mx-2">
-                    <a class="btn btn-light btn-sm"
+                    <a class="btn btn-success btn-sm"
                        href="/covoiturage-projet/public/admin/agencies">
                         Agences
                     </a>
                 </li>
 
                 <li class="nav-item mx-2">
-                    <a class="btn btn-light btn-sm"
+                    <a class="btn btn-success btn-sm"
                        href="/covoiturage-projet/public/admin/trips">
                         Trajets
                     </a>

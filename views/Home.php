@@ -15,7 +15,7 @@
  */
 ?>
 
-<h2 class="mb-4 mt-5">
+<h2 class="mb-4 mt-5 pt-5">
     <?php if (!\Core\Auth::check()): ?>
         Pour obtenir plus d'informations sur un trajet, veuillez vous connecter
     <?php else: ?>

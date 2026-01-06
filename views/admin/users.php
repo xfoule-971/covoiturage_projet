@@ -1,4 +1,4 @@
-<h1 class="mb-4">Liste des utilisateurs</h1>
+<h1 class="mb-4 mt-5 pt-5">Liste des utilisateurs</h1>
 
 <table class="table table-striped table-bordered">
     <thead class="table-dark">

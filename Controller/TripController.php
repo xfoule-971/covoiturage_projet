@@ -8,10 +8,12 @@ use Core\Auth;
 /**
  * Class TripController
  *
- * Gère les trajets :
- * - accueil public
- * - accueil utilisateur connecté
- * - création d'un trajet
+ * Gestion des trajets :
+ * - affichage public
+ * - affichage utilisateur connecté
+ * - création
+ * - modification
+ * - suppression
  */
 class TripController
 {
@@ -28,7 +30,7 @@ class TripController
     }
 
     /**
-     * Accueil VISITEUR
+     * Page d'accueil VISITEUR
      */
     public function index(): void
     {
@@ -40,93 +42,58 @@ class TripController
     }
 
     /**
-     * Accueil UTILISATEUR CONNECTÉ
+     * Page d'accueil UTILISATEUR CONNECTÉ
      */
     public function homeUser(): void
     {
         Auth::requireLogin();
 
-        $trips = $this->tripModel->findAllAvailableFuture();
+        $trips    = $this->tripModel->findAllAvailableFuture();
+        $agencies = $this->agencyModel->findAll();
 
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/HomeUser.php';
+        require __DIR__ . '/../Views/homeuser.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
      * Création d'un trajet
-     *
-     * Règles métier :
-     * - utilisateur connecté
-     * - agences différentes
-     * - date future
-     * - arrivée après départ
-     * - places entre 1 et 10
      */
     public function create(): void
     {
         Auth::requireLogin();
 
-        /* =========================
-         * CSRF
-         * ========================= */
-        if (empty($_SESSION['csrf'])) {
+        if (!isset($_SESSION['csrf'])) {
             $_SESSION['csrf'] = bin2hex(random_bytes(32));
         }
 
         $agencies = $this->agencyModel->findAll();
         $error = null;
 
-        /* =========================
-         * TRAITEMENT FORMULAIRE
-         * ========================= */
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            // ---- Vérification CSRF ----
-            if (
-                empty($_POST['csrf']) ||
-                !hash_equals($_SESSION['csrf'], $_POST['csrf'])
-            ) {
-                http_response_code(403);
-                die('Requête CSRF invalide');
+            if ($_POST['csrf'] !== $_SESSION['csrf']) {
+                die('CSRF détecté');
             }
 
-            // ---- Récupération sécurisée ----
-            $departureAgency = filter_input(INPUT_POST, 'departure_agency_id', FILTER_VALIDATE_INT);
-            $arrivalAgency   = filter_input(INPUT_POST, 'arrival_agency_id', FILTER_VALIDATE_INT);
-            $departureDate   = $_POST['departure_datetime'] ?? null;
-            $arrivalDate     = $_POST['arrival_datetime'] ?? null;
-            $totalSeats      = filter_input(INPUT_POST, 'total_seats', FILTER_VALIDATE_INT);
+            $departureAgency = (int) $_POST['departure_agency_id'];
+            $arrivalAgency   = (int) $_POST['arrival_agency_id'];
+            $departureDate   = $_POST['departure_datetime'];
+            $arrivalDate     = $_POST['arrival_datetime'];
+            $totalSeats      = (int) $_POST['total_seats'];
 
             /* =========================
-             * CONTRÔLES MÉTIER
+             * Contrôles métier
              * ========================= */
-
-            if (!$departureAgency || !$arrivalAgency || !$departureDate || !$arrivalDate || !$totalSeats) {
-                $error = "Tous les champs sont obligatoires.";
+            if ($departureAgency === $arrivalAgency) {
+                $error = "Les agences doivent être différentes.";
+            } elseif (strtotime($arrivalDate) <= strtotime($departureDate)) {
+                $error = "L'arrivée doit être après le départ.";
+            } elseif ($totalSeats < 1 || $totalSeats > 10) {
+                $error = "Nombre de places invalide.";
             }
 
-            elseif ($departureAgency === $arrivalAgency) {
-                $error = "L'agence de départ et d'arrivée doivent être différentes.";
-            }
-
-            elseif (strtotime($departureDate) <= time()) {
-                $error = "La date de départ doit être dans le futur.";
-            }
-
-            elseif (strtotime($arrivalDate) <= strtotime($departureDate)) {
-                $error = "La date d'arrivée doit être postérieure à la date de départ.";
-            }
-
-            elseif ($totalSeats < 1 || $totalSeats > 10) {
-                $error = "Le nombre de places doit être compris entre 1 et 10.";
-            }
-
-            /* =========================
-             * CRÉATION TRAJET
-             * ========================= */
             if (!$error) {
-
                 $this->tripModel->create([
                     'departure_agency_id' => $departureAgency,
                     'arrival_agency_id'   => $arrivalAgency,
@@ -137,19 +104,36 @@ class TripController
                     'user_id'             => $_SESSION['user']->id
                 ]);
 
-                header('Location: /covoiturage-projet/public/home-user');
+                header('Location: /covoiturage-projet/public/homeuser');
                 exit;
             }
         }
 
-        /* =========================
-         * AFFICHAGE FORMULAIRE
-         * ========================= */
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/trip/create.php';
+        require __DIR__ . '/../Views/trips/create.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
+
+    /**
+     * Suppression d'un trajet
+     */
+    public function delete(int $id): void
+    {
+        Auth::requireLogin();
+
+        $trip = $this->tripModel->findById($id);
+
+        if (!$trip || $trip->user_id !== $_SESSION['user']->id && !Auth::isAdmin()) {
+            die('Accès interdit');
+        }
+
+        $this->tripModel->delete($id);
+
+        header('Location: /covoiturage-projet/public/homeuser');
+        exit;
+    }
 }
+
 
 
 

@@ -36,7 +36,7 @@
             <th>Date de départ</th>
             <th>Arrivée</th>
             <th>Date d'arrivée</th>
-            <th>Places disponibles</th>
+            <th>Places</th>
         </tr>
     </thead>
 
@@ -56,7 +56,7 @@
             </td>
 
             <td>
-                <span class="badge bg-success">
+                <span>
                     <?= (int) $trip->available_seats ?>
                 </span>
             </td>

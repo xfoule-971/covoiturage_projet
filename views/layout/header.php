@@ -10,12 +10,18 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
+
+    <!-- CSS application -->
+    <link rel="stylesheet" href="/covoiturage-projet/public/assets/style.css">
+
 </head>
 
 <body>
 
-<!-- Barre de navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-5 fixed-top">
+<!-- ========================= -->
+<!-- BARRE DE NAVIGATION -->
+<!-- ========================= -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-5 navigation">
     <div class="container">
 
         <!-- ===================== -->
@@ -24,31 +30,64 @@
 
         <?php if (\Core\Auth::isAdmin()): ?>
             <!-- Admin : lien vers dashboard -->
-            <a class="navbar-brand" href="/covoiturage-projet/public/admin">
-                Covoiturage
+            <a class="navbar-brand fw-bold" href="/covoiturage-projet/public/admin">
+                Touche pas au klaxon
             </a>
         <?php else: ?>
-            <!-- Visiteur / utilisateur : lien accueil -->
-            <a class="navbar-brand" href="/covoiturage-projet/public/">
-                Covoiturage
+            <!-- Visiteur / utilisateur -->
+            <a class="navbar-brand fw-bold" href="/covoiturage-projet/public/">
+                Touche pas au klaxon
             </a>
         <?php endif; ?>
 
         <!-- ===================== -->
-        <!-- DROITE : Actions -->
+        <!-- CENTRE : MENU ADMIN -->
+        <!-- ===================== -->
+
+        <?php if (\Core\Auth::isAdmin()): ?>
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item mx-2">
+                    <a class="btn btn-light btn-sm"
+                       href="/covoiturage-projet/public/admin/users">
+                        Utilisateurs
+                    </a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="btn btn-light btn-sm"
+                       href="/covoiturage-projet/public/admin/agencies">
+                        Agences
+                    </a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="btn btn-light btn-sm"
+                       href="/covoiturage-projet/public/admin/trips">
+                        Trajets
+                    </a>
+                </li>
+
+            </ul>
+        <?php endif; ?>
+
+        <!-- ===================== -->
+        <!-- DROITE : ACTIONS -->
         <!-- ===================== -->
 
         <ul class="navbar-nav ms-auto align-items-center">
 
             <?php if (\Core\Auth::check()): ?>
 
-                <!-- Créer un trajet -->
-                <li class="nav-item mx-3">
-                    <a href="/covoiturage-projet/public/trips/create"
-                       class="btn btn-success">
-                        Créer un trajet
-                    </a>
-                </li>
+                <!-- Créer un trajet (utilisateur uniquement) -->
+                <?php if (!\Core\Auth::isAdmin()): ?>
+                    <li class="nav-item mx-3">
+                        <a href="/covoiturage-projet/public/trips/create"
+                           class="btn btn-success">
+                            Créer un trajet
+                        </a>
+                    </li>
+                <?php endif; ?>
 
                 <!-- Bonjour prénom nom -->
                 <li class="nav-item mx-3">
@@ -62,7 +101,7 @@
                 <!-- Déconnexion -->
                 <li class="nav-item mx-3">
                     <a href="/covoiturage-projet/public/logout"
-                       class="btn btn-danger">
+                       class="btn btn-dark">
                         Déconnexion
                     </a>
                 </li>
@@ -83,7 +122,9 @@
     </div>
 </nav>
 
-<!-- Contenu principal -->
+<!-- ========================= -->
+<!-- CONTENU PRINCIPAL -->
+<!-- ========================= -->
 <div class="container">
 
 

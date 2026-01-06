@@ -1,66 +1,164 @@
 <?php
 namespace Controller;
 
-use Models\UserModel;
 use Core\Auth;
+use Models\UserModel;
+use Models\AgencyModel;
+use Models\TripModel;
 
-class AuthController {
-
+/**
+ * Class AdminController
+ *
+ * Tableau de bord ADMIN
+ * Accès strictement réservé aux administrateurs
+ */
+class AdminController
+{
     private UserModel $userModel;
+    private AgencyModel $agencyModel;
+    private TripModel $tripModel;
 
-    public function __construct() {
-        $this->userModel = new UserModel();
+    /**
+     * Sécurité + chargement modèles
+     */
+    public function __construct()
+    {
+        Auth::requireAdmin();
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $this->userModel   = new UserModel();
+        $this->agencyModel = new AgencyModel();
+        $this->tripModel   = new TripModel();
     }
 
-    public function login(): void {
-
-        if (!isset($_SESSION['csrf'])) {
-            $_SESSION['csrf'] = bin2hex(random_bytes(32));
-        }
-
-        $error = null;
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            if (
-                !isset($_POST['csrf']) ||
-                $_POST['csrf'] !== $_SESSION['csrf']
-            ) {
-                die('⛔ Tentative CSRF détectée');
-            }
-
-            $email    = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-            $password = $_POST['password'] ?? '';
-
-            $user = $this->userModel->authenticate($email, $password);
-
-            if ($user) {
-                Auth::login($user);
-                session_regenerate_id(true);
-
-                header('Location: /covoiturage-projet/public/');
-                exit;
-            }
-
-            $error = 'Identifiants incorrects';
-        }
-
+    /**
+     * Dashboard admin
+     */
+    public function dashboard(): void
+    {
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/auth/login.php';
+        require __DIR__ . '/../Views/admin/dashboard.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
-    public function logout(): void {
-        Auth::logout();
+    /**
+     * Liste des utilisateurs
+     */
+    public function users(): void
+    {
+        $users = $this->userModel->findAll();
 
-        header('Location: /covoiturage-projet/public/');
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/users.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Liste des agences
+     */
+    public function agencies(): void
+    {
+        $agencies = $this->agencyModel->findAll();
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/agencies.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Création d'une agence
+     */
+    public function createAgency(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            if ($_POST['csrf'] !== $_SESSION['csrf']) {
+                die('⛔ CSRF détectée');
+            }
+
+            $name = trim($_POST['name']);
+
+            if ($name !== '') {
+                $this->agencyModel->create([
+                    'name' => $name
+                ]);
+
+                header('Location: /covoiturage-projet/public/admin/agencies');
+                exit;
+            }
+        }
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/agency_form.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Modification d'une agence
+     */
+    public function editAgency(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $agency = $this->agencyModel->findById($id);
+
+        if (!$agency) {
+            die('Agence introuvable');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            if ($_POST['csrf'] !== $_SESSION['csrf']) {
+                die('⛔ CSRF détectée');
+            }
+
+            $this->agencyModel->update($id, [
+                'name' => trim($_POST['name'])
+            ]);
+
+            header('Location: /covoiturage-projet/public/admin/agencies');
+            exit;
+        }
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/agency_form.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Suppression agence
+     */
+    public function deleteAgency(): void
+    {
+        $this->agencyModel->delete((int) $_GET['id']);
+        header('Location: /covoiturage-projet/public/admin/agencies');
+        exit;
+    }
+
+    /**
+     * Liste des trajets (ADMIN)
+     */
+    public function trips(): void
+    {
+        $trips = $this->tripModel->findAll();
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/admin/trips.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Suppression trajet
+     */
+    public function deleteTrip(): void
+    {
+        $this->tripModel->delete((int) $_GET['id']);
+        header('Location: /covoiturage-projet/public/admin/trips');
         exit;
     }
 }
+
+
+
+
 
 
 

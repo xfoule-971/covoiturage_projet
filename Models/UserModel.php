@@ -19,6 +19,22 @@ class UserModel {
     }
 
     /**
+     * Récupère tous les utilisateurs
+     */
+    public function getAll(): array
+    {
+        $sql = "
+            SELECT id, firstname, lastname, email, role
+            FROM users
+            ORDER BY lastname ASC
+        ";
+
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+
+
+    /**
      * Retourne tous les utilisateurs
      */
     public function findAll(): array {

@@ -7,21 +7,12 @@ use Core\Auth;
 /**
  * Class AuthController
  *
- * Gère l'authentification des utilisateurs :
- * - affichage du formulaire de connexion
- * - traitement du formulaire
- * - sécurisation CSRF
- * - connexion / déconnexion
- *
- * Aucune logique métier n'est mise dans les vues.
+ * Gère l'authentification :
+ * - connexion
+ * - déconnexion
  */
 class AuthController
 {
-    /**
-     * Modèle utilisateur
-     *
-     * @var UserModel
-     */
     private UserModel $userModel;
 
     /**
@@ -33,74 +24,61 @@ class AuthController
     }
 
     /**
-     * Connexion utilisateur (GET + POST)
-     *
-     * GET  → affiche le formulaire
-     * POST → traite la connexion
+     * Connexion utilisateur
+     * - GET : affiche le formulaire
+     * - POST : traite la connexion
      */
     public function login(): void
     {
-        // ===============================
-        // DÉMARRAGE SESSION SI NÉCESSAIRE
-        // ===============================
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // ===============================
-        // GÉNÉRATION TOKEN CSRF
-        // ===============================
-        if (empty($_SESSION['csrf'])) {
+        // Génération CSRF si absent
+        if (!isset($_SESSION['csrf'])) {
             $_SESSION['csrf'] = bin2hex(random_bytes(32));
         }
 
         $error = null;
 
-        // ===============================
-        // TRAITEMENT FORMULAIRE
-        // ===============================
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            // ---- Vérification CSRF ----
+            /* =========================
+             * Sécurité CSRF
+             * ========================= */
             if (
-                empty($_POST['csrf']) ||
-                !hash_equals($_SESSION['csrf'], $_POST['csrf'])
+                !isset($_POST['csrf']) ||
+                $_POST['csrf'] !== $_SESSION['csrf']
             ) {
-                http_response_code(403);
-                die('⛔ Requête CSRF invalide');
+                die('⛔ Tentative CSRF détectée');
             }
 
-            // ---- Nettoyage entrées ----
-            $email    = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            /* =========================
+             * Données formulaire
+             * ========================= */
+            $email    = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
-            if (!$email || !$password) {
-                $error = 'Tous les champs sont obligatoires';
+            if ($email === '' || $password === '') {
+                $error = "Veuillez remplir tous les champs.";
             } else {
 
-                // ---- Authentification via le modèle ----
+                /* =========================
+                 * Authentification
+                 * ========================= */
                 $user = $this->userModel->authenticate($email, $password);
 
                 if ($user) {
-
-                    // ---- Connexion utilisateur ----
                     Auth::login($user);
 
-                    // ---- Sécurité : nouvelle session ----
-                    session_regenerate_id(true);
-
-                    // ---- Redirection utilisateur ----
-                    header('Location: /covoiturage-projet/public/home-user');
+                    // Redirection home utilisateur
+                    header('Location: /covoiturage-projet/public/homeuser');
                     exit;
+                } else {
+                    $error = "Email ou mot de passe incorrect.";
                 }
-
-                $error = 'Email ou mot de passe incorrect';
             }
         }
 
-        // ===============================
-        // AFFICHAGE VUE
-        // ===============================
+        /* =========================
+         * Affichage formulaire
+         * ========================= */
         require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/auth/login.php';
         require __DIR__ . '/../Views/layout/footer.php';
@@ -111,14 +89,12 @@ class AuthController
      */
     public function logout(): void
     {
-        // Déconnexion centralisée
         Auth::logout();
-
-        // Redirection vers accueil public
         header('Location: /covoiturage-projet/public/');
         exit;
     }
 }
+
 
 
 

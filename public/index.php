@@ -53,7 +53,7 @@ $router->get('/logout', function () {
  * ========================= */
 
 // Accueil utilisateur
-$router->get('/home-user', function () {
+$router->get('/homeuser', function () {
     \Core\Auth::requireLogin();
     (new TripController())->homeUser();
 });
@@ -63,6 +63,52 @@ $router->match('/trips/create', function () {
     \Core\Auth::requireLogin();
     (new TripController())->create();
 });
+
+/* =========================
+ * ADMINISTRATEUR
+ * ========================= */
+
+// Dashboard admin
+$router->get('/admin', function () {
+    (new Controller\AdminController())->dashboard();
+});
+
+// Liste utilisateurs
+$router->get('/admin/users', function () {
+    (new Controller\AdminController())->users();
+});
+
+// Liste agences
+$router->get('/admin/agencies', function () {
+    (new Controller\AdminController())->agencies();
+});
+
+// Création agence
+$router->match('/admin/agencies/create', function () {
+    (new Controller\AdminController())->createAgency();
+});
+
+// Modification agence
+$router->match('/admin/agencies/edit', function () {
+    (new Controller\AdminController())->editAgency();
+});
+
+// Suppression agence
+$router->get('/admin/agencies/delete', function () {
+    (new Controller\AdminController())->deleteAgency();
+});
+
+// Liste trajets
+$router->get('/admin/trips', function () {
+    (new Controller\AdminController())->trips();
+});
+
+// Suppression trajet
+$router->get('/admin/trips/delete', function () {
+    (new Controller\AdminController())->deleteTrip();
+});
+
+
 
 /* =========================
  * LANCEMENT DU ROUTER

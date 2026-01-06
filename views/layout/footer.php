@@ -1,5 +1,5 @@
 </div> <!-- container -->
-<footer class="bg-light text-center py-3 mt-4">
+<footer class="text-light bg-primary text-center py-3 mt-5">
     © 2025 – COVOITURAGE – MVC PHP
 </footer>
 <!-- Bootstrap JS -->

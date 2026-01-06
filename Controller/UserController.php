@@ -7,11 +7,7 @@ use Core\Auth;
 /**
  * Class UserController
  *
- * Contrôleur des utilisateurs
- *
- * Fonctionnalités possibles :
- *  - Liste des utilisateurs (ADMIN uniquement)
- *  - Affichage des détails d'un utilisateur
+ * Gestion des utilisateurs (ADMIN)
  */
 class UserController {
 
@@ -22,34 +18,34 @@ class UserController {
     }
 
     /**
-     * Liste tous les utilisateurs
-     * Accessible uniquement à l'administrateur
+     * Liste des utilisateurs
      */
     public function index(): void {
-        Auth::requireAdmin(); // Bloque les non-admins
+        Auth::requireAdmin();
 
-        // Récupération des utilisateurs
         $users = $this->userModel->findAll();
 
-        // Vue d'affichage
+        require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/users/index.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Affiche les détails d'un utilisateur
-     *
-     * @param int $id
+     * Détail d'un utilisateur
      */
     public function show(int $id): void {
-        Auth::requireAdmin(); // Seul l'admin peut voir les infos complètes
+        Auth::requireAdmin();
 
         $user = $this->userModel->findById($id);
+
         if (!$user) {
             http_response_code(404);
-            die("Utilisateur non trouvé !");
+            die('Utilisateur non trouvé');
         }
 
+        require __DIR__ . '/../Views/layout/header.php';
         require __DIR__ . '/../Views/users/show.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 }
 

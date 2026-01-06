@@ -1,98 +1,122 @@
 <?php
-// Affichage des erreurs pour le développement
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+/**
+ * Point d’entrée de l’application
+ * - démarre la session
+ * - charge l’autoloader
+ * - délègue au routeur
+ */
 
-use Core\Autoloader;
-use Router\Router;
-use Controller\UserController;
-use Controller\AgencyController;
-use Controller\TripController;
-use Controller\AuthController;
-use Controller\AdminController;
+declare(strict_types=1);
 
-// Démarrage de session (nécessaire pour Auth)
+// =====================
+// SESSION
+// =====================
 session_start();
 
-// Chargement de l'autoloader
+// =====================
+// AUTOLOADER
+// =====================
 require_once __DIR__ . '/../Core/Autoloader.php';
-Autoloader::register();
+\Core\Autoloader::register();
 
-// Vérification rapide du router
-if (!class_exists(\Router\Router::class)) {
-    die("Erreur : Router non trouvé !");
-}
+// =====================
+// ROUTER
+// =====================
+use Router\Router;
+use Controller\TripController;
+use Controller\AuthController;
 
-// Instanciation du router
+// Instanciation du routeur
 $router = new Router();
 
-// ===== ROUTES PUBLIQUES =====
+/* =========================
+ * ROUTES PUBLIQUES
+ * ========================= */
 
-// Page d'accueil publique (trajets disponibles)
-$router->get('/', function() {
-    $controller = new TripController();
-    $controller->index();
+// Page d'accueil (visiteur)
+$router->get('/', function () {
+    (new TripController())->index();
 });
 
-// Users (liste admin)
-$router->get('/users', function() {
-    $controller = new UserController();
-    $controller->index();
+// Connexion
+$router->match('/login', function () {
+    (new AuthController())->login();
 });
 
-// Agencies
-$router->get('/agencies', function() {
-    $controller = new AgencyController();
-    $controller->index();
+// Déconnexion
+$router->get('/logout', function () {
+    (new AuthController())->logout();
 });
 
-// Trips
-$router->get('/trips', function() {
-    $controller = new TripController();
-    $controller->index();
+/* =========================
+ * UTILISATEUR CONNECTÉ
+ * ========================= */
+
+// Accueil utilisateur
+$router->get('/homeuser', function () {
+    \Core\Auth::requireLogin();
+    (new TripController())->homeUser();
 });
 
-// Générer 100 trajets aléatoires (admin / test)
-$router->get('/generate-trips', function() {
-    $controller = new TripController();
-    $controller->generateRandomTrips(100, 20);
-    echo "<p><a href='/covoiturage-projet/public/trips'>Voir les trajets générés</a></p>";
+// Création d'un trajet
+$router->match('/trips/create', function () {
+    \Core\Auth::requireLogin();
+    (new TripController())->create();
 });
 
-// ===== ROUTES AUTH =====
-$router->match('/login', function() {
-    $controller = new AuthController();
-    $controller->login();
-}, ['GET', 'POST']);
+/* =========================
+ * ADMINISTRATEUR
+ * ========================= */
 
-$router->get('/logout', function() {
-    $controller = new AuthController();
-    $controller->logout();
+// Dashboard admin
+$router->get('/admin', function () {
+    (new Controller\AdminController())->dashboard();
 });
 
-// ===== ROUTES ADMIN =====
-$router->get('/admin', function() {
-    $controller = new AdminController();
-    $controller->dashboard();
+// Liste utilisateurs
+$router->get('/admin/users', function () {
+    (new Controller\AdminController())->users();
 });
 
-$router->get('/admin/users', function() {
-    $controller = new AdminController();
-    $controller->users();
+// Liste agences
+$router->get('/admin/agencies', function () {
+    (new Controller\AdminController())->agencies();
 });
 
-$router->get('/admin/agencies', function() {
-    $controller = new AdminController();
-    $controller->agencies();
+// Création agence
+$router->match('/admin/agencies/create', function () {
+    (new Controller\AdminController())->createAgency();
 });
 
-$router->get('/admin/trips', function() {
-    $controller = new AdminController();
-    $controller->trips();
+// Modification agence
+$router->match('/admin/agencies/edit', function () {
+    (new Controller\AdminController())->editAgency();
 });
 
-// Lancer le router
+// Suppression agence
+$router->get('/admin/agencies/delete', function () {
+    (new Controller\AdminController())->deleteAgency();
+});
+
+// Liste trajets
+$router->get('/admin/trips', function () {
+    (new Controller\AdminController())->trips();
+});
+
+// Suppression trajet
+$router->get('/admin/trips/delete', function () {
+    (new Controller\AdminController())->deleteTrip();
+});
+
+
+
+/* =========================
+ * LANCEMENT DU ROUTER
+ * ========================= */
+
 $router->run();
+
+
 
 
 

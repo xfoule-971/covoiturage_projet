@@ -8,67 +8,90 @@ use PDO;
  * Class AgencyModel
  *
  * Modèle des agences (villes)
- * Fournit les méthodes pour récupérer et gérer les agences
+ * Fournit toutes les opérations CRUD :
+ * - liste
+ * - création
+ * - modification
+ * - suppression
  */
-class AgencyModel {
-
+class AgencyModel
+{
     private PDO $db;
 
-    public function __construct() {
+    /**
+     * Connexion PDO
+     */
+    public function __construct()
+    {
         $this->db = Db::getInstance();
     }
 
     /**
      * Retourne toutes les agences
      */
-    public function findAll(): array {
+    public function findAll(): array
+    {
         $stmt = $this->db->query("SELECT * FROM agencies ORDER BY name");
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
     /**
      * Retourne une agence par son ID
-     *
-     * @param int $id
      */
-    public function findById(int $id): ?object {
+    public function findById(int $id): ?object
+    {
         $stmt = $this->db->prepare("SELECT * FROM agencies WHERE id = ?");
         $stmt->execute([$id]);
-        $agency = $stmt->fetch();
+        $agency = $stmt->fetch(PDO::FETCH_OBJ);
+
         return $agency ?: null;
     }
 
     /**
      * Crée une nouvelle agence
      *
-     * @param array $data ['name' => 'Nom de l’agence']
+     * @param array $data ['name' => string]
      */
-    public function create(array $data): void {
-        $stmt = $this->db->prepare("INSERT INTO agencies (name) VALUES (?)");
-        $stmt->execute([$data['name']]);
+    public function create(array $data): void
+    {
+        $stmt = $this->db->prepare(
+            "INSERT INTO agencies (name) VALUES (?)"
+        );
+
+        $stmt->execute([
+            $data['name']
+        ]);
     }
 
     /**
      * Met à jour une agence existante
      *
-     * @param int $id
-     * @param array $data ['name' => 'Nouveau nom']
+     * @param int   $id
+     * @param array $data ['name' => string]
      */
-    public function update(int $id, array $data): void {
-        $stmt = $this->db->prepare("UPDATE agencies SET name = ? WHERE id = ?");
-        $stmt->execute([$data['name'], $id]);
+    public function update(int $id, array $data): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE agencies SET name = ? WHERE id = ?"
+        );
+
+        $stmt->execute([
+            $data['name'],
+            $id
+        ]);
     }
 
     /**
      * Supprime une agence
-     *
-     * @param int $id
      */
-    public function delete(int $id): void {
+    public function delete(int $id): void
+    {
         $stmt = $this->db->prepare("DELETE FROM agencies WHERE id = ?");
         $stmt->execute([$id]);
     }
 }
+
+
 
 
 

@@ -68,7 +68,7 @@ class Auth
     {
         if (!self::isAdmin()) {
             http_response_code(403);
-            die('⛔ Accès administrateur requis');
+            die('Accès administrateur requis');
         }
     }
 
@@ -91,3 +91,5 @@ class Auth
         session_destroy();
     }
 }
+
+

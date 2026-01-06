@@ -8,112 +8,138 @@ use Core\Auth;
 /**
  * Class TripController
  *
- * Contrôleur des trajets.
- * Gestion :
- *  - affichage des trajets publics et utilisateurs
- *  - création aléatoire pour tests
- *  - futur ajout création / modification / suppression
+ * Gestion des trajets :
+ * - affichage public
+ * - affichage utilisateur connecté
+ * - création
+ * - modification
+ * - suppression
  */
-class TripController {
-
+class TripController
+{
     private TripModel $tripModel;
     private AgencyModel $agencyModel;
 
-    public function __construct() {
-        $this->tripModel = new TripModel();
+    /**
+     * Constructeur
+     */
+    public function __construct()
+    {
+        $this->tripModel   = new TripModel();
         $this->agencyModel = new AgencyModel();
     }
 
     /**
-     * Affiche tous les trajets
-     * 
-     * Pour la page d'accueil :
-     *  - uniquement trajets avec places disponibles
-     *  - uniquement trajets futurs
-     *  - tri par date de départ croissante
+     * Page d'accueil VISITEUR
      */
-    public function index(): void {
+    public function index(): void
+    {
         $trips = $this->tripModel->findAllAvailableFuture();
-        require __DIR__ . '/../Views/Home.php';
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/home.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Génère des trajets aléatoires (outil admin / dev)
-     *
-     * @param int $numTrips Nombre de trajets à générer
-     * @param int $numUsers Nombre d'utilisateurs possibles
+     * Page d'accueil UTILISATEUR CONNECTÉ
      */
-    public function generateRandomTrips(int $numTrips = 100, int $numUsers = 20): void {
+    public function homeUser(): void
+    {
+        Auth::requireLogin();
 
-        // Récupère toutes les agences
+        $trips    = $this->tripModel->findAllAvailableFuture();
         $agencies = $this->agencyModel->findAll();
-        $agencyIds = array_map(fn($a) => $a->id, $agencies);
 
-        for ($i = 0; $i < $numTrips; $i++) {
-
-            // Choix aléatoire agences départ/arrivée (différentes)
-            $departure = $agencyIds[array_rand($agencyIds)];
-            do {
-                $arrival = $agencyIds[array_rand($agencyIds)];
-            } while ($arrival === $departure);
-
-            // Génération aléatoire date/heure
-            $departureTime = new \DateTime(
-                '+' . rand(0,30) . ' days +' . rand(0,23) . ' hours +' . rand(0,59) . ' minutes'
-            );
-            $arrivalTime = clone $departureTime;
-            $arrivalTime->modify('+' . rand(1,6) . ' hours');
-
-            // Si totalSeats = 3..6, availableSeats peut être 0..totalSeats
-            $totalSeats = rand(3,6);
-            $availableSeats = rand(0,$totalSeats);
-
-            // Choix utilisateur aléatoire
-            $userId = rand(1,$numUsers);
-
-            // Création du trajet dans la base
-            $this->tripModel->create([
-                'departure_agency_id' => $departure,
-                'arrival_agency_id'   => $arrival,
-                'departure_datetime'  => $departureTime->format('Y-m-d H:i:s'),
-                'arrival_datetime'    => $arrivalTime->format('Y-m-d H:i:s'),
-                'total_seats'         => $totalSeats,
-                'available_seats'     => $availableSeats,
-                'user_id'             => $userId
-            ]);
-        }
-
-        echo "✅ $numTrips trajets générés !";
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/homeuser.php';
+        require __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**
-     * Affiche les détails d'un trajet
-     * Accessible à tous mais modal complet pour les utilisateurs connectés
-     *
-     * @param int $id
+     * Création d'un trajet
      */
-    public function show(int $id): void {
+    public function create(): void
+    {
+        Auth::requireLogin();
+
+        if (!isset($_SESSION['csrf'])) {
+            $_SESSION['csrf'] = bin2hex(random_bytes(32));
+        }
+
+        $agencies = $this->agencyModel->findAll();
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            if ($_POST['csrf'] !== $_SESSION['csrf']) {
+                die('CSRF détecté');
+            }
+
+            $departureAgency = (int) $_POST['departure_agency_id'];
+            $arrivalAgency   = (int) $_POST['arrival_agency_id'];
+            $departureDate   = $_POST['departure_datetime'];
+            $arrivalDate     = $_POST['arrival_datetime'];
+            $totalSeats      = (int) $_POST['total_seats'];
+
+            /* =========================
+             * Contrôles métier
+             * ========================= */
+            if ($departureAgency === $arrivalAgency) {
+                $error = "Les agences doivent être différentes.";
+            } elseif (strtotime($arrivalDate) <= strtotime($departureDate)) {
+                $error = "L'arrivée doit être après le départ.";
+            } elseif ($totalSeats < 1 || $totalSeats > 10) {
+                $error = "Nombre de places invalide.";
+            }
+
+            if (!$error) {
+                $this->tripModel->create([
+                    'departure_agency_id' => $departureAgency,
+                    'arrival_agency_id'   => $arrivalAgency,
+                    'departure_datetime'  => $departureDate,
+                    'arrival_datetime'    => $arrivalDate,
+                    'total_seats'         => $totalSeats,
+                    'available_seats'     => $totalSeats,
+                    'user_id'             => $_SESSION['user']->id
+                ]);
+
+                header('Location: /covoiturage-projet/public/homeuser');
+                exit;
+            }
+        }
+
+        require __DIR__ . '/../Views/layout/header.php';
+        require __DIR__ . '/../Views/trips/create.php';
+        require __DIR__ . '/../Views/layout/footer.php';
+    }
+
+    /**
+     * Suppression d'un trajet
+     */
+    public function delete(int $id): void
+    {
+        Auth::requireLogin();
+
         $trip = $this->tripModel->findById($id);
-        if (!$trip) {
-            http_response_code(404);
-            die("Trajet non trouvé !");
+
+        if (!$trip || $trip->user_id !== $_SESSION['user']->id && !Auth::isAdmin()) {
+            die('Accès interdit');
         }
 
-        require __DIR__ . '/../Views/trips/show.php';
-    }
+        $this->tripModel->delete($id);
 
-    /**
-     * Vérifie que l'utilisateur peut modifier ou supprimer un trajet
-     *
-     * @param object $trip
-     */
-    private function authorizeUser(object $trip): void {
-        if (!Auth::check() || ($trip->user_id !== Auth::user()->id && !Auth::isAdmin())) {
-            http_response_code(403);
-            die('⛔ Action non autorisée');
-        }
+        header('Location: /covoiturage-projet/public/homeuser');
+        exit;
     }
 }
+
+
+
+
+
+
+
 
 
 

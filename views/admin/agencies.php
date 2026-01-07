@@ -1,4 +1,4 @@
-<h2 class="mb-4">Gestion des agences</h2>
+<h2 class="mb-4 mt-4 pt-5">Gestion des agences</h2>
 
 <!-- Bouton création -->
 <a href="/covoiturage-projet/public/admin/agencies/create"

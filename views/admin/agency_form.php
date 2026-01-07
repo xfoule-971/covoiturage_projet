@@ -2,7 +2,7 @@
 $isEdit = isset($agency);
 ?>
 
-<h2 class="mb-4">
+<h2 class="mb-4 mt-5 pt-5">
     <?= $isEdit ? 'Modifier une agence' : 'Créer une agence' ?>
 </h2>
 

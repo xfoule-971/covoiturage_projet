@@ -72,7 +72,7 @@ class AdminController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($_POST['csrf'] !== $_SESSION['csrf']) {
-                die('⛔ CSRF détectée');
+                die('CSRF détectée');
             }
 
             $name = trim($_POST['name']);
@@ -107,7 +107,7 @@ class AdminController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($_POST['csrf'] !== $_SESSION['csrf']) {
-                die('⛔ CSRF détectée');
+                die('CSRF détectée');
             }
 
             $this->agencyModel->update($id, [

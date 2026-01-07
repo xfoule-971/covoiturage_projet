@@ -15,7 +15,7 @@
  */
 ?>
 
-<h2 class="mb-4 mt-5">
+<h2 class="mb-4 mt-5 pt-5">
     <?php if (!\Core\Auth::check()): ?>
         Pour obtenir plus d'informations sur un trajet, veuillez vous connecter
     <?php else: ?>
@@ -29,43 +29,52 @@
     </div>
 <?php else: ?>
 
-<table class="table table-striped align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>Départ</th>
-            <th>Date de départ</th>
-            <th>Arrivée</th>
-            <th>Date d'arrivée</th>
-            <th>Places</th>
-        </tr>
-    </thead>
+<!-- ===================== -->
+<!-- TABLE DES TRAJETS -->
+<!-- RESPONSIVE MOBILE -->
+<!-- ===================== -->
+<div class="table-responsive trips-table">
 
-    <tbody>
-    <?php foreach ($trips as $trip): ?>
-        <tr>
-            <td><?= htmlspecialchars($trip->departure_agency) ?></td>
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Départ</th>
+                <th>Date de départ</th>
+                <th>Arrivée</th>
+                <th>Date d'arrivée</th>
+                <th>Places</th>
+            </tr>
+        </thead>
 
-            <td>
-                <?= date('d/m/Y H:i', strtotime($trip->departure_datetime)) ?>
-            </td>
+        <tbody>
+        <?php foreach ($trips as $trip): ?>
+            <tr>
+                <td><?= htmlspecialchars($trip->departure_agency) ?></td>
 
-            <td><?= htmlspecialchars($trip->arrival_agency) ?></td>
+                <td>
+                    <?= date('d/m/Y H:i', strtotime($trip->departure_datetime)) ?>
+                </td>
 
-            <td>
-                <?= date('d/m/Y H:i', strtotime($trip->arrival_datetime)) ?>
-            </td>
+                <td><?= htmlspecialchars($trip->arrival_agency) ?></td>
 
-            <td>
-                <span>
-                    <?= (int) $trip->available_seats ?>
-                </span>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-    </tbody>
-</table>
+                <td>
+                    <?= date('d/m/Y H:i', strtotime($trip->arrival_datetime)) ?>
+                </td>
+
+                <td>
+                    <span class="fw-bold">
+                        <?= (int) $trip->available_seats ?>
+                    </span>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+</div>
 
 <?php endif; ?>
+
 
 
 

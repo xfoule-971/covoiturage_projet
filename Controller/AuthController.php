@@ -46,7 +46,7 @@ class AuthController
                 !isset($_POST['csrf']) ||
                 $_POST['csrf'] !== $_SESSION['csrf']
             ) {
-                die('⛔ Tentative CSRF détectée');
+                die('Tentative CSRF détectée');
             }
 
             /* =========================

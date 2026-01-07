@@ -1,4 +1,4 @@
-<h2 class="mb-4">Tous les trajets</h2>
+<h2 class="mb-4 mt-4 pt-5">Tous les trajets</h2>
 
 <table class="table table-striped align-middle">
     <thead class="table-dark">

@@ -1,3 +1,46 @@
-.navigation{
-    background-color: #0074c7;
+/* ============================
+   TABLE TRAJETS - RESPONSIVE
+   ============================ */
+
+.trips-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.trips-table table {
+    min-width: 700px; /* force le scroll horizontal */
+}
+
+.trips-table th,
+.trips-table td {
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+/* ============================
+   TABLE TRAJETS - RESPONSIVE
+   ============================ */
+
+.trips-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.trips-table table {
+    min-width: 700px;
+}
+
+.trips-table th,
+.trips-table td {
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+
+/* Boutons actions plus cliquables sur mobile */
+@media (max-width: 576px) {
+    .trips-table .btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
 }

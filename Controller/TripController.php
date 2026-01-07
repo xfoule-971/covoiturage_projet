@@ -110,7 +110,7 @@ class TripController
         }
 
         require __DIR__ . '/../Views/layout/header.php';
-        require __DIR__ . '/../Views/trips/create.php';
+        require __DIR__ . '/../Views/trip/create.php';
         require __DIR__ . '/../Views/layout/footer.php';
     }
 
